@@ -80,6 +80,11 @@ async function run() {
             }
         })
 
+        app.get('/comment', async(req,res) => {
+            const result = await myCollComment.find({}).toArray()
+            res.send(result)
+        })
+
         app.patch('/comment', async (req, res) => {
             const bodyTime = req.body.Time
             const bodysData = req.body.Data
@@ -97,6 +102,14 @@ async function run() {
             const bodysID = req.body.commentID
             const qureys = {_id : new ObjectId(bodysID)}
             const result = await myCollComment.deleteOne(qureys)
+            console.log(result)
+            res.send(result)
+        })
+
+        app.delete('/comment/:IdeaId', async(req,res) => {
+            const bodysID = await req.params.IdeaId
+            const qureys = { IdeaPageid : bodysID }
+            const result = await myCollComment.deleteMany(qureys)
             console.log(result)
             res.send(result)
         })
