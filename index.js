@@ -39,6 +39,7 @@ async function run() {
             res.send(result)
         })
 
+
         app.get('/ideas/:id', async (req, res) => {
             const idnumber = req.params.id
             // console.log(idnumber)
@@ -46,6 +47,28 @@ async function run() {
                 _id: new ObjectId(idnumber)
             }
             const result = await myColl.findOne(querys)
+            res.send(result)
+        })
+
+        app.patch('/ideas/:id', async(req,res) => {
+            const bodyId = await req.params.id
+            const bodys = req.body
+            console.log(bodyId,bodys)
+            const query = {
+                _id : new ObjectId(bodyId)
+            }
+            const update = { $set: bodys };
+            const result = await myColl.updateOne(query,update)
+            console.log(result)
+            res.send(result)
+        })
+
+        app.delete('/ideas/:id',async(req,res) => {
+            const reqId = req.params.id
+            const querys = {
+                _id : new ObjectId(reqId)
+            }
+            const result = await myColl.deleteOne(querys)
             res.send(result)
         })
 
