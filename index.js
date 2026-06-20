@@ -1,6 +1,49 @@
+const dns = require('node:dns')
+dns.setServers(['8.8.8.8','8.8.4.4'])
 const express = require('express')
 const app = express()
 const port = 5000
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://idea_vault:idea_vault2005@cluster0.6ivmdtk.mongodb.net/?appName=Cluster0";
+const cors = require('cors');
+
+app.use(cors());
+app.use(express.json())
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+const myDB = client.db("ideas_vault");
+const myColl = myDB.collection("Ideas");
+
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+
+
+    app.post('/ideas', async(req,res) => {
+        const data =  await req.body
+        const result = await myColl.insertOne(data)
+        res.send(result)
+    })
+
+
+
+    // Send a ping to confirm a successful connection
+    await client.db("ideas_vault").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    //await client.close();
+  }
+}
+run().catch(console.dir);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
