@@ -6,6 +6,8 @@ const port = 5000
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = "mongodb+srv://idea_vault:idea_vault2005@cluster0.6ivmdtk.mongodb.net/?appName=Cluster0";
 const cors = require('cors');
+const jose = require('jose-cjs');
+const { SignJWT, jwtVerify, generateKeyPair, createRemoteJWKSet } = require('jose-cjs');
 
 app.use(cors());
 app.use(express.json())
@@ -23,19 +25,44 @@ const myColl = myDB.collection("Ideas");
 const myCollComment = myDB.collection('Comment')
 const myCollUser = myDB.collection('user')
 
+const JWKS = createRemoteJWKSet(
+    new URL('http://localhost:3000/api/auth/jwks')
+)
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+}
+
+
+
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
 
-        app.post('/ideas', async (req, res) => {
+        app.post('/ideas',verifyToken, async (req, res) => {
             const data = await req.body
             const result = await myColl.insertOne(data)
             res.send(result)
         })
 
-        app.patch('/user/:id', async(req,res) => {
+        app.patch('/user/:id',verifyToken, async(req,res) => {
              const bodyId = await req.params.id
             const bodys = req.body
             console.log(bodyId,bodys)
@@ -53,14 +80,15 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/ideas', async (req, res) => {
+        app.get('/ideas',verifyToken, async (req, res) => {
             const result = await myColl.find().toArray()
             res.send(result)
         })
 
 
-        app.get('/ideas/:id', async (req, res) => {
+        app.get('/ideas/:id',verifyToken, async (req, res) => {
             const idnumber = req.params.id
+            
             // console.log(idnumber)
             const querys = {
                 _id: new ObjectId(idnumber)
@@ -99,7 +127,7 @@ async function run() {
             }
         })
 
-        app.get('/comment', async(req,res) => {
+        app.get('/comment',verifyToken, async(req,res) => {
             const result = await myCollComment.find({}).toArray()
             res.send(result)
         })
