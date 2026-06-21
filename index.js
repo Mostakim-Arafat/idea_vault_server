@@ -21,6 +21,7 @@ const client = new MongoClient(uri, {
 const myDB = client.db("ideas_vault");
 const myColl = myDB.collection("Ideas");
 const myCollComment = myDB.collection('Comment')
+const myCollUser = myDB.collection('user')
 
 async function run() {
     try {
@@ -31,6 +32,24 @@ async function run() {
         app.post('/ideas', async (req, res) => {
             const data = await req.body
             const result = await myColl.insertOne(data)
+            res.send(result)
+        })
+
+        app.patch('/user/:id', async(req,res) => {
+             const bodyId = await req.params.id
+            const bodys = req.body
+            console.log(bodyId,bodys)
+            const query = {
+                _id : new ObjectId(bodyId)
+            }
+            const update = { $set: bodys };
+            const result = await myCollUser.updateOne(query,update)
+            console.log(result)
+            res.send(result)
+        })
+
+        app.get('/trends', async(req,res) => {
+            const result = await myColl.find().limit(3).toArray()
             res.send(result)
         })
 
