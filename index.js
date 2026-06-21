@@ -1,16 +1,19 @@
 const dns = require('node:dns')
 dns.setServers(['8.8.8.8', '8.8.4.4'])
+const dontenv = require("dotenv");
+dontenv.config();
 const express = require('express')
 const app = express()
-const port = 5000
+const port = process.env.PORT
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const uri = "mongodb+srv://idea_vault:idea_vault2005@cluster0.6ivmdtk.mongodb.net/?appName=Cluster0";
+const uri = process.env.MONGO_URL
 const cors = require('cors');
 const jose = require('jose-cjs');
 const { SignJWT, jwtVerify, generateKeyPair, createRemoteJWKSet } = require('jose-cjs');
 
 app.use(cors());
 app.use(express.json())
+
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -26,7 +29,7 @@ const myCollComment = myDB.collection('Comment')
 const myCollUser = myDB.collection('user')
 
 const JWKS = createRemoteJWKSet(
-    new URL('http://localhost:3000/api/auth/jwks')
+    new URL(`${process.env.CLIENT}/api/auth/jwks`)
 )
 
 const verifyToken = async (req, res, next) => {
@@ -53,7 +56,7 @@ const verifyToken = async (req, res, next) => {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+       // await client.connect();
 
 
         app.post('/ideas',verifyToken, async (req, res) => {
@@ -80,7 +83,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/ideas',verifyToken, async (req, res) => {
+        app.get('/ideas',async (req, res) => {
             const result = await myColl.find().toArray()
             res.send(result)
         })
@@ -97,7 +100,7 @@ async function run() {
             res.send(result)
         })
 
-        app.patch('/ideas/:id', async(req,res) => {
+        app.patch('/ideas/:id',verifyToken, async(req,res) => {
             const bodyId = await req.params.id
             const bodys = req.body
             console.log(bodyId,bodys)
@@ -110,7 +113,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/ideas/:id',async(req,res) => {
+        app.delete('/ideas/:id',verifyToken,async(req,res) => {
             const reqId = req.params.id
             const querys = {
                 _id : new ObjectId(reqId)
@@ -119,7 +122,7 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/comment', async (req, res) => {
+        app.post('/comment',verifyToken, async (req, res) => {
             const body = await req.body
             if (body.Data) {
                 const result = await myCollComment.insertOne(body)
@@ -132,7 +135,7 @@ async function run() {
             res.send(result)
         })
 
-        app.patch('/comment', async (req, res) => {
+        app.patch('/comment',verifyToken, async (req, res) => {
             const bodyTime = req.body.Time
             const bodysData = req.body.Data
             const bodysID = req.body.Commentid
@@ -145,7 +148,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/comment', async(req,res) => {
+        app.delete('/comment',verifyToken, async(req,res) => {
             const bodysID = req.body.commentID
             const qureys = {_id : new ObjectId(bodysID)}
             const result = await myCollComment.deleteOne(qureys)
@@ -173,7 +176,7 @@ async function run() {
         })
 
         // Send a ping to confirm a successful connection
-        await client.db("ideas_vault").command({ ping: 1 });
+       // await client.db("ideas_vault").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
